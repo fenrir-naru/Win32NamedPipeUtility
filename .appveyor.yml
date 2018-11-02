@@ -1,5 +1,8 @@
 version: 1.0.{build}.{branch}
 image: Visual Studio 2017
+platform:
+  - x86
+  - x64
 configuration: Release
 #before_build:
 #  - nuget restore NamedPipeUtility.sln
@@ -8,10 +11,10 @@ build:
   verbosity: minimal
 after_build:
   - type nul > %APPVEYOR_REPO_COMMIT%.commit
-  - 7z a windows.%APPVEYOR_REPO_BRANCH%.zip %APPVEYOR_BUILD_FOLDER%\%CONFIGURATION%\*\*.exe %APPVEYOR_REPO_COMMIT%.commit -x!test_*.exe
+  - 7z a windows.%PLATFORM%.%APPVEYOR_REPO_BRANCH%.zip %APPVEYOR_BUILD_FOLDER%\%CONFIGURATION%\*\*.exe %APPVEYOR_REPO_COMMIT%.commit -x!test_*.exe
 artifacts:
   - path: windows.*.zip
-    name: x86 x64 binary
+    name: Windows binary
 before_deploy:
   - echo on
     & for /f "usebackq delims=" %%a in (`git log --pretty^=format:%%cd -n 1`) do set TIMESTAMP="%%a"
