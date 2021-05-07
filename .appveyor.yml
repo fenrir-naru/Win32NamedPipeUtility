@@ -4,6 +4,11 @@ platform:
   - x86
   - x64
 configuration: Release
+environment:
+  GITHUB_PERSONAL_TOKEN:
+    secure: XFmyvKgDIrqXVNChBESWc2rf2i77lOMCDtrnc/US6dyt0NlgWBeN6CIl7o5vjtG9
+install:
+  - for /f "tokens=2 delims=/" %%a in ("%APPVEYOR_REPO_NAME%") do set REPO_NAME="%%a"
 #before_build:
 #  - nuget restore NamedPipeUtility.sln
 build:
@@ -19,17 +24,14 @@ before_deploy:
   - echo on
     & for /f "usebackq delims=" %%a in (`git log --pretty^=format:%%cd -n 1`) do set TIMESTAMP="%%a"
     & for /f "usebackq delims=" %%a in (`ruby -e 'require "time"^; print Time::parse^(ENV["TIMESTAMP"]^).strftime^("%%Y%%m%%d_%%H%%M%%S"^)'`) do set TIMESTAMP=%%a
-deploy:
-  - provider: BinTray
-    username: fenrir-naru
-    api_key:
-      secure: 9aElrrL3YTy/8XlhblScghgwtorv/6LRNnBkvz5v3OWPoAss903yzMQ9VfsjHzMk
-    subject: fenrir-naru
-    repo: github
-    package: Win32NamedPipeUtility
-    version: $(TIMESTAMP)/$(TIMESTAMP)
-    publish: true
-    override: true
-    explode: false
-    on:
-      branch: master
+  - echo on
+    & mkdir artifacts\%REPO_NAME%
+    & copy /b windows.%PLATFORM%.%APPVEYOR_REPO_BRANCH%.zip artifacts\%REPO_NAME%
+  - echo on
+    & mkdir C:\tmp
+    & curl -fL -o C:\tmp\ghcp.zip https://github.com/int128/ghcp/releases/download/v1.13.0/ghcp_windows_amd64.zip
+    & 7z e C:\tmp\ghcp.zip -oC:\tmp *.exe
+deploy_script:
+  - echo on
+    & cd artifacts
+    & C:\tmp\ghcp.exe commit -u fenrir-naru -r archives -m "build by AppVeyor, %TIMESTAMP%" --token=%GITHUB_PERSONAL_TOKEN% %REPO_NAME%/windows.%PLATFORM%.%APPVEYOR_REPO_BRANCH%.zip
